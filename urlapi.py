@@ -544,8 +544,9 @@ def main():
             run = True
         
         # print information (basic goal 1)
+        step = 0
         if recipe:
-            print("Ok, I got \'%s\'. " % recipe['name'])
+            print("Ok, let's do that with your recipe, \'%s\'. " % recipe['name'])
         while recipe:
             function = input('''What would you like to see? \n 
             [a] Ingredients
@@ -558,14 +559,16 @@ def main():
             if function == 'a' or function == 'A':
                 ingPy.ing_print(recipe['ingredients'])
             elif function == 'b' or function == 'B':
-                step = 0
                 oneByOne = None
                 while not oneByOne:
                     oneByOne = input('Would you like [1] one step at a time or [2] all steps now?\n')
                     if oneByOne == "2":
                         print_steps(recipe)
                     elif oneByOne == "1":
+                        print("You can tell me to go forward, backward, start over, or go to a particular step at any time.")
+                        print("Your recipe has " + str(len(recipe['steps'])) + ' steps.')
                         print_step(recipe, step)
+                        step += 1
                     else:
                         print('Hmm, I didn\'t catch that.')
                         oneByOne = None
@@ -584,9 +587,65 @@ def main():
                 run = False
                 break
 
+            # navigate forward and back a step at a time
+            elif 'forward' in function or 'next' in function:
+                doStep = True
+                if 'step' not in function: 
+                    check = input("To be clear, you'd like to see the next step? [1] Yes [2] No \n")
+                    if check == '2': doStep = False 
+                if doStep:
+                    if step < len(recipe['steps']) - 1:
+                        step += 1
+                        print_step(recipe, step)
+                    else: 
+                        print("There is no next step! Here is the last step: ")
+                        step = len(recipe['steps']) - 1
+                        print_step(recipe, step)
+
+            elif 'backward' in function or 'back' in function or 'previous' in function:
+                doStep = True
+                if 'step' not in function: 
+                    check = input("To be clear, you'd like to see the previous step? [1] Yes [2] No \n")
+                    if check == '2': doStep = False 
+                if doStep:
+                    if step > 0:
+                        step -= 1
+                        print_step(recipe, step)
+                    else: 
+                        print("There is no previous step! Here is the first step: ")
+                        print_step(recipe, 0)
+                        step = 0
+
+            elif re.search(r"\bstep\b", function): # the word "step" with word boundaries at either side
+                found = False
+                for word in function.lower().split():
+                    nth = re.match(r"([0-9]+)", word)
+                    if nth: 
+                        found = True
+                        num = nth.group(0)
+                        if int(num) > 0 and int(num) < len(recipe['steps']) + 1:
+                            print("Here is step " + nth.group(0) + ':')
+                            step = int(num) - 1
+                            print_step(recipe, step)
+                        else:
+                            print("Sorry, that step number is out of bounds.")
+                            print("Your recipe has " + str(len(recipe['steps'])) + ' steps.')
+                if not found: 
+                    print('Sorry, which step would you like to see? Please use numerals rather than spelled out words.')
+
+            else: 
+                print("Sorry, I didn\'t understand that. You can enter 'Q' at any time to quit.")
+
+
+
 def handle_question(recipe):
-    # here we handle vague questions and specific how-to questions
+    # here we handle specific how-to questions
     # for now, i'm only taking questions of the form "How do I <xyz>?"
+    # later we will want to add other question forms
+    # we will also need to handle "vague questions" like "how do i do that"
+    #   this will require the bot to know what it has previously said
+    # for an extra goal, we could add something like "how much x do i need" and answer with ingredients
+    #                   or "how long do i bake this for" and answer with the time from the relevant step
     question = None
     while not question:
         question = input("Okay! What's your question? \n")
