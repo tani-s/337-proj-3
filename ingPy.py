@@ -175,12 +175,12 @@ def ing_print(ing_dict):
         print('Measurement: %s' %ing_dict[i][1])
         if len(ing_dict[i][2]) > 1: 
             print('Descriptor: ' + ', '.join(ing_dict[i][2]))
-        else:
+        elif len(ing_dict[i][2]) == 1:
             print('Descriptor: %s' %ing_dict[i][2])
         
         if len(ing_dict[i][3]) > 1: 
             print('Preparation: ' + ', '.join(ing_dict[i][3]))
-        else:
+        elif len(ing_dict[i][3]) == 1:
             print('Preparation: %s' %ing_dict[i][3])
 
 #ing_print(get_ingredients(url))

@@ -4,12 +4,15 @@ import requests
 from unicodedata import numeric
 import nltk
 import re
-#from pattern.en import pluralize
+from pattern.en import pluralize
+import string
 import veggies
 import pprint
 import ingPy
 from helper import get_after_prefix, apply, get_POS_after_prefix
+from nltk.corpus import stopwords
 
+stop_words = set(stopwords.words('english'))
 
 
 url = 'https://www.allrecipes.com/recipe/273864/greek-chicken-skewers/'
@@ -136,13 +139,20 @@ get_tools(url3)
 """
 
 # returns a dict of steps, key = step number, value = action, ingredients, tools, time
-def get_steps(url):
+def get_steps(url, isEnglish):
     page = requests.get(url)
     soup = BeautifulSoup(page.text, 'html.parser')
     s = soup.find('script', type='application/ld+json')
     j = json.loads(s.string)
     instructions = j[1]['recipeInstructions']
     ingredients = ingPy.get_ingredients(url)
+
+    if isEnglish: 
+        steps = []
+        for step in instructions:
+            steps.append(step['text'].lower().strip())
+        return steps
+
 
     # splitting into individual steps (by sentence, and splitting up ;s)
     steps = []
@@ -391,7 +401,7 @@ def url_to_recipe(url):
         'ingredients': ingPy.get_ingredients(url),
         'tools': get_tools(url),
         'method': get_method(url),
-        'steps': get_steps(url),
+        'steps': get_steps(url, True),
     }
     return recipe
 
@@ -497,65 +507,131 @@ def printCount(steps):
         print("     " + str(i) + ": " + steps[i - 1])
 
 def main():
-    url = input("Enter a URL to parse!\n")
+    url = input("Hello! I can help you with a recipe. Enter a URL to parse!\n")
     while "allrecipes" not in url:
-        url = input("URL invalid (must be allrecipes). Try again:")
-    function = input('''What would you like to do? \n 
-    [a] Parse as-is
-    [b] Transform to vegetarian 
-    [c] Parse with recipe doubled
-    [d] Parse with recipe halved
-    [e] Transform to Lithuanian
-    [f] Transform to healthy
-    ''')
-    if function == 'a' or function == 'A':
-        recipe = url_to_recipe(url)
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printStep(recipe['steps'])
-    elif function == 'b' or function == 'B':
-        recipe = url_to_transform(url, veg_transform)
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printCount(recipe['steps'])
-    elif function == 'c' or function == 'C':
-        recipe = double(url_to_recipe(url))
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printStep(recipe['steps'])
-    elif function == 'd' or function == 'D':
-        recipe = halve(url_to_recipe(url))
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printStep(recipe['steps'])
-    elif function == 'e' or function == 'E':
-        recipe = url_to_transform_gen(url, Lithuanian_sub)
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printCount(recipe['steps'])
-    elif function == 'f' or function == 'F':
-        recipe = url_to_transform_gen(url, health_sub)
-        print('Recipe name: ' + recipe['name'])
-        ingPy.ing_print(recipe['ingredients'])
-        print('Tools: %s' %recipe['tools'])
-        print('Primary method: %s' %recipe['method'])
-        print('Steps: ')
-        printCount(recipe['steps'])
+        url = input("This URL doesn't work (must be AllRecipes). Try again:")
+    
+    run = True
+    while run:
+        # get a transform
+        function = input('''What would you like to do? \n 
+        [a] Parse as-is
+        [b] Transform to vegetarian 
+        [c] Parse with recipe doubled
+        [d] Parse with recipe halved
+        [e] Transform to Lithuanian
+        [f] Transform to healthy
+        ''')
+        recipe = None
+        if function == 'a' or function == 'A':
+            recipe = url_to_recipe(url)
+        elif function == 'b' or function == 'B':
+            recipe = url_to_transform(url, veg_transform)
+        elif function == 'c' or function == 'C':
+            recipe = double(url_to_recipe(url))
+        elif function == 'd' or function == 'D':
+            recipe = halve(url_to_recipe(url))
+        elif function == 'e' or function == 'E':
+            recipe = url_to_transform_gen(url, Lithuanian_sub)
+        elif function == 'f' or function == 'F':
+            recipe = url_to_transform_gen(url, health_sub)
+        elif function == 'q' or function == 'Q' or function == 'quit' or function == "Quit":
+            print("Okay! Bye!")
+            run = False
+            break
+        else: 
+            print("Sorry, I didn\'t understand that. You can enter 'Q' at any time to quit.")
+            run = True
+        
+        # print information (basic goal 1)
+        if recipe:
+            print("Ok, I got \'%s\'. " % recipe['name'])
+        while recipe:
+            function = input('''What would you like to see? \n 
+            [a] Ingredients
+            [b] Steps 
+            [c] Tools
+            [d] Methods
+            [e] All of the above
+            [f] I have a question.
+            ''')
+            if function == 'a' or function == 'A':
+                ingPy.ing_print(recipe['ingredients'])
+            elif function == 'b' or function == 'B':
+                step = 0
+                oneByOne = None
+                while not oneByOne:
+                    oneByOne = input('Would you like [1] one step at a time or [2] all steps now?\n')
+                    if oneByOne == "2":
+                        print_steps(recipe)
+                    elif oneByOne == "1":
+                        print_step(recipe, step)
+                    else:
+                        print('Hmm, I didn\'t catch that.')
+                        oneByOne = None
+            elif function == 'c' or function == 'C':
+                print_tools(recipe)
+            elif function == 'd' or function == 'D':
+                print_methods(recipe)
+            elif function == 'e' or function == 'E':
+                print_all(recipe)
+            elif function == 'f' or function == 'F':
+                handle_question(recipe)
+
+            elif function == 'q' or function == 'Q' or function == 'quit' or function == "Quit":
+                print("Okay! Bye!")
+                recipe = False
+                run = False
+                break
+
+def handle_question(recipe):
+    # here we handle vague questions and specific how-to questions
+    # for now, i'm only taking questions of the form "How do I <xyz>?"
+    question = None
+    while not question:
+        question = input("Okay! What's your question? \n")
+        q = question.lower() 
+        if q[:9] == 'how do i ':
+            print('''I found this on the web for "%s": 
+            ''' % question)
+            print(get_link_from_q(q[9:]))
+        else: 
+            print('''I'm sorry, I don't know how to help you with that question yet. 
+            Try asking questions of the form "How do I..." 
+            ''')
+
+def get_link_from_q(q):
+    q = q.translate(str.maketrans('', '', string.punctuation))
+    query = []
+    for word in q.split(' '):
+        if word not in stop_words:
+            query.append(word)
+    link ='https://www.google.com/search?q=how+to'
+    for word in query:
+        link += '+' + word
+    return link
+
+def print_all(recipe):
+    print('Recipe name: ' + recipe['name'])
+    ingPy.ing_print(recipe['ingredients'])
+    print_tools(recipe)
+    print_method(recipe)
+    print_steps(recipe)
+
+def print_tools(recipe):
+    print('Tools: %s' %recipe['tools'])
+
+def print_method(recipe):
+    print('Primary method: %s' %recipe['method'])
+
+def print_steps(recipe):
+    print('Steps: ')
+    printCount(recipe['steps'])
+
+def print_step(recipe, i):
+    print('Step ' + str(i + 1) + ': ')
+    print(recipe['steps'][i])
+
 main()
 
 #print(double(url_to_recipe(url2)))
