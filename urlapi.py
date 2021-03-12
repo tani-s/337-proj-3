@@ -543,7 +543,7 @@ def main():
             print("Sorry, I didn\'t understand that. You can enter 'Q' at any time to quit.")
             run = True
         
-        # print information (basic goal 1)
+        # print information (basic goal 1, to expand on this we could use regex to scan for keywords)
         step = 0
         if recipe:
             print("Ok, let's do that with your recipe, \'%s\'. " % recipe['name'])
@@ -587,7 +587,7 @@ def main():
                 run = False
                 break
 
-            # navigate forward and back a step at a time
+            # navigate forward and back a step at a time (goal 2, complete)
             elif 'forward' in function or 'next' in function:
                 doStep = True
                 if 'step' not in function: 
@@ -639,10 +639,9 @@ def main():
 
 
 def handle_question(recipe):
-    # here we handle specific how-to questions
+    # here we handle specific how-to questions (goal 4, to expand we will need other question forms)
     # for now, i'm only taking questions of the form "How do I <xyz>?"
-    # later we will want to add other question forms
-    # we will also need to handle "vague questions" like "how do i do that"
+    # we will also need to handle "vague questions" like "how do i do that" (goal 3)
     #   this will require the bot to know what it has previously said
     # for an extra goal, we could add something like "how much x do i need" and answer with ingredients
     #                   or "how long do i bake this for" and answer with the time from the relevant step
