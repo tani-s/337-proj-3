@@ -595,8 +595,9 @@ def main():
                     if check == '2': doStep = False 
                 if doStep:
                     if step < len(recipe['steps']) - 1:
-                        step += 1
+                        #step += 1
                         print_step(recipe, step)
+                        step += 1
                     else: 
                         print("There is no next step! Here is the last step: ")
                         step = len(recipe['steps']) - 1
@@ -673,13 +674,13 @@ def print_all(recipe):
     print('Recipe name: ' + recipe['name'])
     ingPy.ing_print(recipe['ingredients'])
     print_tools(recipe)
-    print_method(recipe)
+    print_methods(recipe)
     print_steps(recipe)
 
 def print_tools(recipe):
     print('Tools: %s' %recipe['tools'])
 
-def print_method(recipe):
+def print_methods(recipe):
     print('Primary method: %s' %recipe['method'])
 
 def print_steps(recipe):
