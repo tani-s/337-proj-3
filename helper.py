@@ -1,5 +1,18 @@
 import nltk
 
+def contains(sent, word):
+    sent = sent.lower()
+    word = word.lower()
+
+    return sent.find(word) != -1
+"""
+s1 = "Show Me VegEtarian"
+s2 = "show me veggies"
+word = "vegetarian"
+print(contains(s1,word))
+print(contains(s2,word))
+"""
+
 #@paragraph should be a word tokenized paragraph
 #@phrases should be a LIST of word tokenized phrases
 def get_after_prefix(paragraph, phrases):

@@ -9,7 +9,7 @@ import string
 import veggies
 import pprint
 import ingPy
-from helper import get_after_prefix, apply, get_POS_after_prefix
+from helper import get_after_prefix, apply, get_POS_after_prefix, contains
 from nltk.corpus import stopwords
 
 stop_words = set(stopwords.words('english'))
@@ -523,17 +523,17 @@ def main():
         [f] Transform to healthy
         ''')
         recipe = None
-        if function == 'a' or function == 'A':
+        if function == 'a' or function == 'A' or contains(function, "as-is") or contains(function, "as is"):
             recipe = url_to_recipe(url)
-        elif function == 'b' or function == 'B':
+        elif function == 'b' or function == 'B' or contains(function, "vegetarian"):
             recipe = url_to_transform(url, veg_transform)
-        elif function == 'c' or function == 'C':
+        elif function == 'c' or function == 'C' or contains(function, "double"):
             recipe = double(url_to_recipe(url))
-        elif function == 'd' or function == 'D':
+        elif function == 'd' or function == 'D' or contains(function, "half") or contains(function, "halve"):
             recipe = halve(url_to_recipe(url))
-        elif function == 'e' or function == 'E':
+        elif function == 'e' or function == 'E' or contains(function, "lithuanian"):
             recipe = url_to_transform_gen(url, Lithuanian_sub)
-        elif function == 'f' or function == 'F':
+        elif function == 'f' or function == 'F' or contains(function, "health"):
             recipe = url_to_transform_gen(url, health_sub)
         elif function == 'q' or function == 'Q' or function == 'quit' or function == "Quit":
             print("Okay! Bye!")
@@ -556,15 +556,15 @@ def main():
             [e] All of the above
             [f] I have a question.
             ''')
-            if function == 'a' or function == 'A':
+            if function == 'a' or function == 'A' or contains(function, "ingredient"):
                 ingPy.ing_print(recipe['ingredients'])
-            elif function == 'b' or function == 'B':
+            elif function == 'b' or function == 'B' or contains(function, "step"):
                 oneByOne = None
                 while not oneByOne:
                     oneByOne = input('Would you like [1] one step at a time or [2] all steps now?\n')
-                    if oneByOne == "2":
+                    if oneByOne == "2" or  contains(oneByOne, "all"):
                         print_steps(recipe)
-                    elif oneByOne == "1":
+                    elif oneByOne == "1" or contains(oneByOne, "one"):
                         print("You can tell me to go forward, backward, start over, or go to a particular step at any time.")
                         print("Your recipe has " + str(len(recipe['steps'])) + ' steps.')
                         print_step(recipe, step)
@@ -572,13 +572,13 @@ def main():
                     else:
                         print('Hmm, I didn\'t catch that.')
                         oneByOne = None
-            elif function == 'c' or function == 'C':
+            elif function == 'c' or function == 'C' or contains(function, "tool"):
                 print_tools(recipe)
-            elif function == 'd' or function == 'D':
+            elif function == 'd' or function == 'D' or contains(function, "method"):
                 print_methods(recipe)
-            elif function == 'e' or function == 'E':
+            elif function == 'e' or function == 'E' or contains(function, "all"):
                 print_all(recipe)
-            elif function == 'f' or function == 'F':
+            elif function == 'f' or function == 'F' or contains(function, "question"):
                 handle_question(recipe)
 
             elif function == 'q' or function == 'Q' or function == 'quit' or function == "Quit":
