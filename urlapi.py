@@ -507,7 +507,7 @@ def printCount(steps):
         print("     " + str(i) + ": " + steps[i - 1])
 
 def main():
-    url = input("Hello! I can help you with a recipe. Enter a URL to parse!\n")
+    url = input("Ayyyyo whasss Gucci! It's cha boi, Sir Pickles Von Quackmeister III here to help you with your recipe! Enter a URL to parse!\n")
     while "allrecipes" not in url:
         url = input("This URL doesn't work (must be AllRecipes). Try again:")
     
