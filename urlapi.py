@@ -569,6 +569,7 @@ def main():
                         print("You can tell me to go forward, backward, start over, or go to a particular step at any time.")
                         print("Your recipe has " + str(len(recipe['steps'])) + ' steps.')
                         print_step(recipe, step)
+                        prevStep = step
                         step += 1
                     else:
                         print('Hmm, I didn\'t catch that.')
