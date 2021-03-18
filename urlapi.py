@@ -676,14 +676,13 @@ def handle_question(recipe, step):
             ''' % question)
             print(get_link_from_q_what(q[9:]))
         elif q[:9] == 'how much ' or q[:9] == 'how many ':
-            print(get_ingredient_quantity(q[9:], recipe))
+            get_ingredient_quantity(q[9:], recipe)
         else:
             print('''I'm sorry, I don't know how to help you with that question yet.
             Try asking questions of the form "How do I..."
             ''')
 
 def get_ingredient_quantity(string, recipe):
-    print(recipe['ingredients'])
     for i in recipe['ingredients']:
         if i in string:
             if recipe['ingredients'][i][1] == None:
