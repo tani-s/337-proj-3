@@ -545,6 +545,7 @@ def main():
         
         # print information (basic goal 1, to expand on this we could use regex to scan for keywords)
         step = 0
+        prevStep = -1
         if recipe:
             print("Ok, let's do that with your recipe, \'%s\'. " % recipe['name'])
         while recipe:
@@ -579,7 +580,7 @@ def main():
             elif function == 'e' or function == 'E' or contains(function, "all"):
                 print_all(recipe)
             elif function == 'f' or function == 'F' or contains(function, "question"):
-                handle_question(recipe)
+                handle_question(recipe, prevStep)
 
             elif function == 'q' or function == 'Q' or function == 'quit' or function == "Quit":
                 print("Okay! Bye!")
@@ -590,38 +591,42 @@ def main():
             # navigate forward and back a step at a time (goal 2, complete)
             elif 'forward' in function or 'next' in function:
                 doStep = True
-                if 'step' not in function: 
+                if 'step' not in function:
                     check = input("To be clear, you'd like to see the next step? [1] Yes [2] No \n")
-                    if check == '2': doStep = False 
+                    if check == '2': doStep = False
                 if doStep:
                     if step < len(recipe['steps']) - 1:
                         #step += 1
                         print_step(recipe, step)
+                        prevStep = step
                         step += 1
-                    else: 
+                    else:
                         print("There is no next step! Here is the last step: ")
+                        prevStep = step
                         step = len(recipe['steps']) - 1
                         print_step(recipe, step)
 
             elif 'backward' in function or 'back' in function or 'previous' in function:
                 doStep = True
-                if 'step' not in function: 
+                if 'step' not in function:
                     check = input("To be clear, you'd like to see the previous step? [1] Yes [2] No \n")
-                    if check == '2': doStep = False 
+                    if check == '2': doStep = False
                 if doStep:
                     if step > 0:
+                        prevStep = step
                         step -= 1
                         print_step(recipe, step)
-                    else: 
+                    else:
                         print("There is no previous step! Here is the first step: ")
                         print_step(recipe, 0)
+                        prevStep = step
                         step = 0
 
             elif re.search(r"\bstep\b", function): # the word "step" with word boundaries at either side
                 found = False
                 for word in function.lower().split():
                     nth = re.match(r"([0-9]+)", word)
-                    if nth: 
+                    if nth:
                         found = True
                         num = nth.group(0)
                         if int(num) > 0 and int(num) < len(recipe['steps']) + 1:
@@ -631,15 +636,15 @@ def main():
                         else:
                             print("Sorry, that step number is out of bounds.")
                             print("Your recipe has " + str(len(recipe['steps'])) + ' steps.')
-                if not found: 
+                if not found:
                     print('Sorry, which step would you like to see? Please use numerals rather than spelled out words.')
 
-            else: 
+            else:
                 print("Sorry, I didn\'t understand that. You can enter 'Q' at any time to quit.")
 
 
 
-def handle_question(recipe):
+def handle_question(recipe, step):
     # here we handle specific how-to questions (goal 4, to expand we will need other question forms)
     # for now, i'm only taking questions of the form "How do I <xyz>?"
     # we will also need to handle "vague questions" like "how do i do that" (goal 3)
@@ -649,15 +654,63 @@ def handle_question(recipe):
     question = None
     while not question:
         question = input("Okay! What's your question? \n")
-        q = question.lower() 
-        if q[:9] == 'how do i ':
-            print('''I found this on the web for "%s": 
+        q = question.lower()
+        if q[:16] == 'how do i do that':
+            if step == -1:
+                print("I'm not sure what you mean.")
+            else:
+                print("I found this on the web.")
+                key = slice_step(recipe['steps'][step])
+                print(get_link_from_q(key))
+        elif q[:9] == 'how do i ':
+            print('''I found this on the web for "%s":
             ''' % question)
             print(get_link_from_q(q[9:]))
-        else: 
-            print('''I'm sorry, I don't know how to help you with that question yet. 
-            Try asking questions of the form "How do I..." 
+        elif q[:8] == 'what is ':
+            print('''I found this on the web for "%s":
+            ''' % question)
+            print(get_link_from_q_what(q[8:]))
+        elif q[:9] == 'what are ':
+            print('''I found this on the web for "%s":
+            ''' % question)
+            print(get_link_from_q_what(q[9:]))
+        elif q[:9] == 'how much ' or q[:9] == 'how many ':
+            print(get_ingredient_quantity(q[9:], recipe))
+        else:
+            print('''I'm sorry, I don't know how to help you with that question yet.
+            Try asking questions of the form "How do I..."
             ''')
+
+def get_ingredient_quantity(string, recipe):
+    print(recipe['ingredients'])
+    for i in recipe['ingredients']:
+        if i in string:
+            if recipe['ingredients'][i][1] == None:
+                print("You need " + str(recipe['ingredients'][i][0]) + " of " + i)
+            else:
+                print("You need " + str(recipe['ingredients'][i][0]) + " " + recipe['ingredients'][i][1] + " of " + i)
+            return
+    print("I couldn't find that ingredient in your current recipe. Are you sure that you need it for this?")
+    return
+
+
+
+
+def slice_step(step):
+    done = False
+    keys = ""
+    splits = step.split()
+    for i in splits:
+        if i == "for" or i == "to" or i == "and" or "into":
+            done = True
+        elif i == ".":
+            break
+        elif i == ",":
+            keys = ""
+            done = False
+        if not(done):
+            keys = keys + " " + i
+    return keys
 
 def get_link_from_q(q):
     q = q.translate(str.maketrans('', '', string.punctuation))
@@ -669,6 +722,17 @@ def get_link_from_q(q):
     for word in query:
         link += '+' + word
     return link
+
+def get_link_from_q_what(q):
+    q = q.translate(str.maketrans('', '', string.punctuation))
+    query = []
+    for word in q.split(' '):
+        if word not in stop_words:
+            query.append(word)
+    link ='https://www.google.com/search?q='
+    for word in query:
+        link += word + '+'
+    return link[:-1]
 
 def print_all(recipe):
     print('Recipe name: ' + recipe['name'])
