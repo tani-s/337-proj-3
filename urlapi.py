@@ -559,7 +559,7 @@ def main():
             ''')
             if function == 'a' or function == 'A' or contains(function, "ingredient"):
                 ingPy.ing_print(recipe['ingredients'])
-            elif function == 'b' or function == 'B' or contains(function, "step"):
+            elif function == 'b' or function == 'B' or contains(function, "steps"):
                 oneByOne = None
                 while not oneByOne:
                     oneByOne = input('Would you like [1] one step at a time or [2] all steps now?\n')
